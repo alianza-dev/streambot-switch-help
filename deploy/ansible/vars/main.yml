@@ -1,11 +1,150 @@
-debugRoles: True
 entityRoster:
-  fooBar:
-    name: 'foo_bar'
+  pinData:
+    name: pin_data
+    app:
+      name: streambot-switch-help
+      short:
+        name: bot-switch-help
+    raw:
+      database: '{{ environmentType }}_switch_help_raw'
+      table: pin_data
     sns:
       filter:
-        match: 'exact'
-        key  : 'type'
-        vals :
-          - 'example_value'
-      topicArn: '__placeholder__'
+        match: exact
+        scope: MessageAttributes
+        key: object_type
+        vals:
+        - com.alianza.voicemail.model.PinDataExchangeMessage
+    streambot:
+      deploy: false
+      tableMeta:
+        _keys:
+        - id
+        _sequence:
+          cols:
+          - event_on
+          - _metadata.sent_timestamp
+          ops:
+          - desc
+          - desc
+        _delete:
+          col: delete_on
+          type: timestamp
+        _create:
+          col: create_on
+          type: timestamp
+      mapping:
+        msg_: env_.contents
+        lookupKeys:
+          event: env_.dateTime
+          sent: sns_.Timestamp
+          action: env_.extensions.action
+          pkey: env_.contents.id
+        map:
+          eventOn: env_.dateTime
+  sipTrunk:
+    name: sip_trunk
+    app:
+      name: streambot-switch-help
+      short:
+        name: bot-switch-help
+    raw:
+      database: '{{ environmentType }}_switch_help_raw'
+      table: sip_trunk
+    sns:
+      filter:
+        match: exact
+        scope: MessageBody
+        key: source
+        vals:
+        - SIP_TRUNK
+    codegen:
+      rawJsonSampler:
+        sampleSize: 800
+    streambot:
+      deploy: true
+      tableMeta:
+        _keys: '["id"]'
+        _sequence: '{"cols": ["event_on", "_metadata.sent_timestamp"], "ops": ["desc",
+          "desc"]}'
+        _delete: '{"col": "delete_on", "type": "timestamp"}'
+        _create: '{"col": "create_on", "type": "timestamp"}'
+      mapping:
+        msg_: env_.contents
+        lookupKeys:
+          event: env_.dateTime
+          sent: sns_.Timestamp
+          action: env_.extensions.action
+          pkey: env_.contents.id
+        map:
+          actingParty: env_.extensions.actingParty
+          eventOn: env_.dateTime
+          createOn:
+            spec:
+              call: true
+              func: spec_if_match
+              kwargs:
+                target: dat
+                spec: env_.dateTime
+                val: CREATE
+                matchSpec: env_.extensions.action
+          deleteOn:
+            spec:
+              call: true
+              func: spec_if_match
+              kwargs:
+                target: dat
+                spec: env_.dateTime
+                val: DELETE
+                matchSpec: env_.extensions.action
+          metadata_action:
+            spec: env_.extensions.action
+          metadata_objectType: env_.source
+          metadata_sentTimestamp: sns_.Timestamp
+          metadata_arrivalTimestamp:
+            spec:
+              val: 1
+          metadata_transformTimestamp:
+            spec:
+              val: 1
+          metadata_streamLag:
+            spec:
+              val: 1
+          metadata_envelope:
+            target: env_
+            spec:
+              call: true
+              func: filter_dict_spec
+              args:
+              - T
+              - - version
+                - id
+                - traceId
+                - dateTime
+                - source
+                - shardId
+                - type
+                - interfaces
+              - type: action
+        postMap:
+          iso8601SchemaFields:
+          - eventOn
+          - createOn
+          - deleteOn
+          - metadata.envelope.dateTime
+configOverride:
+  datalakeConfig:
+    raw:
+      database: '{{ environmentType }}_{{ app.short.sql }}_raw_v3'
+configOptions:
+  entityConfig:
+    isCodegen: true
+    template: entity_config_v2.yml.j2
+    codegen:
+      rawJsonSampler:
+        enabled: true
+        sampleSize: 200
+      modelCodegen:
+        enabled: true
+      codeDiffSubmitter:
+        enabled: true
