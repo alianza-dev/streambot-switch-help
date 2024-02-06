@@ -1,0 +1,81 @@
+  GlueTableParquetSipTrunk:
+    Type: AWS::Glue::Table
+    Properties:
+      CatalogId:
+        Ref: AWS::AccountId
+      DatabaseName:
+        Ref: GlueDatabaseStream
+      TableInput:
+        Description: Transformed streaming Parquet format `sip_trunk` entities
+        Name: sip_trunk
+        Parameters:
+          classification: parquet
+          compressionType: none
+          cloudformationTag: '{{ ARTIFACT_VERSION }}'
+          codegenVersion: 0.0.0.2023-10-10~edfc7ed2
+          _keys: '["id"]'
+          _sequence: '{"cols": ["event_on", "_metadata.sent_timestamp"], "ops": ["desc", "desc"]}'
+          _delete: '{"col": "delete_on", "type": "timestamp"}'
+          _create: '{"col": "create_on", "type": "timestamp"}'
+        StorageDescriptor:
+          Columns:
+          - Name: codegen_version
+            Type: string
+          - Name: id
+            Type: string
+          - Name: account_id
+            Type: string
+          - Name: partition_id
+            Type: string
+          - Name: trunk_name
+            Type: string
+          - Name: concurrent_calls
+            Type: bigint
+          - Name: extension_patterns
+            Type: array<string>
+          - Name: forward
+            Type: struct<partition_id:string,account_id:string,sip_trunk_id:string,forward_always:struct<enabled:boolean,reference_type:string,reference_id:bigint>,forward_on_failure:array<struct<reference_type:string,reference_id:string>>,forward_on_capacity_exceeded:array<struct<reference_type:string,reference_id:string>>>
+          - Name: sip_username
+            Type: string
+          - Name: sip_password
+            Type: string
+          - Name: locked_out
+            Type: boolean
+          - Name: stir_shaken_expanded_caller_id_verification
+            Type: boolean
+          - Name: account
+            Type: struct<id:string,partition_id:string,platform_type:string,route_plan_id:string>
+          - Name: acting_party
+            Type: struct<user_id:string,username:string,user_type:string,partition_id:string,permissions:struct<account:string,account_history:string,account_call_history:string,account_bulk_statuses:string,phone_number:string,phone_number_service_activation:string,phone_number_inventory:string,product:string,product_calling_plan:string,product_groups:string,product_users:string,reports:string,route_plan:string,sip_credentials:string,alianz_a__master_route_plan:string,alianz_a__togglz_admin:string,an_y_managemen_t_use_r:string,an_y_alianz_a_use_r:string>>
+          - Name: event_on
+            Type: timestamp
+          - Name: create_on
+            Type: timestamp
+          - Name: delete_on
+            Type: timestamp
+          - Name: metadata
+            Type: struct<action:string,object_type:string,sent_timestamp:bigint,arrival_timestamp:bigint,transform_timestamp:bigint,stream_lag:bigint,envelope:struct<version:double,id:string,trace_id:string,date_time:timestamp,source:string,shard_id:string,action:string,interfaces:string>>
+          - Name: local_services_enabled
+            Type: boolean
+          - Name: primary_tn
+            Type: bigint
+          - Name: callback_number
+            Type: bigint
+          Location: s3://d2-datalake-layer2-stream-us-east-2/stream/bot_switch_help/sip_trunk/
+          InputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat
+          OutputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat
+          SerdeInfo:
+            SerializationLibrary: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
+            Parameters:
+              serialization.format: '1'
+              paths: codegen_version,id,account_id,partition_id,trunk_name,concurrent_calls,extension_patterns,forward,sip_username,sip_password,locked_out,stir_shaken_expanded_caller_id_verification,account,acting_party,event_on,create_on,delete_on,metadata,local_services_enabled,primary_tn,callback_number
+        PartitionKeys:
+        - Name: _row_format
+          Type: string
+        - Name: _year
+          Type: string
+        - Name: _month
+          Type: string
+        - Name: _day
+          Type: string
+  
